@@ -1,0 +1,10 @@
+# Ignore environment files containing sensitive information
+.env
+
+# Ignore build artifacts
+/build
+/dist
+
+# Ignore temporary files and logs
+*.log
+tmp/

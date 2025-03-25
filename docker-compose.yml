@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  quick-postfix:
+    build: .
+    container_name: quick-postfix
+    env_file: .env
+    ports:
+      # Map external ports to internal ports (465 and 587)
+      - "${SSL_PORT:-465}:465"
+      - "${TLS_PORT:-587}:587"
+      # Optional alternative external port mappings
+      # - "${SSL_PORT_ALT}:465"
+      # - "${TLS_PORT_ALT}:587"
+    volumes:
+      - postfix-certs:/etc/postfix/certs
+      - postfix-spool:/var/spool/postfix
+      - ./.env:/.env:ro
+
+volumes:
+  postfix-certs:
+  postfix-spool:
