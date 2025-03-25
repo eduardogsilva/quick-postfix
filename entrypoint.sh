@@ -1,36 +1,51 @@
 #!/bin/bash
+set -e
 
 source /.env
 
-# Certificados SSL/TLS
+# Create SSL certificate if it doesn't exist
 CERT_DIR="/etc/postfix/certs"
 mkdir -p "$CERT_DIR"
 if [ ! -f "$CERT_DIR/fullchain.pem" ] || [ ! -f "$CERT_DIR/privkey.pem" ]; then
     openssl req -new -newkey rsa:4096 -days 3650 -nodes -x509 \
-        -subj "/CN=${POSTFIX_HOSTNAME:-mail.local}" \
+        -subj "/CN=${POSTFIX_HOSTNAME:-mail.example.com}" \
         -keyout "$CERT_DIR/privkey.pem" \
         -out "$CERT_DIR/fullchain.pem"
 fi
 
-# REMOVE DEFINITIVAMENTE O BANCO SASLDB2
 rm -f /etc/sasldb2*
 
-# Recria usuários agora com domínio correto!
+# Create user list
 IFS=',' read -ra USERS <<< "$USER_LIST"
 for userpass in "${USERS[@]}"; do
     IFS=':' read user pass <<< "$userpass"
+    # Acrescenta o domínio se não houver '@'
+    if [[ "$user" != *"@"* ]]; then
+        user="${user}@${MYDOMAIN}"
+    fi
     echo "$pass" | saslpasswd2 -p -c -u "$MYDOMAIN" "$user"
 done
-chown postfix:sasl /etc/sasldb2
-chmod 640 /etc/sasldb2
 
-# Configuração básica obrigatória
-postconf -e "myhostname = ${POSTFIX_HOSTNAME}"
-postconf -e "mydomain = ${MYDOMAIN}"
-postconf -e "smtpd_sasl_local_domain = ${MYDOMAIN}"
+chown postfix:postfix /etc/sasldb2
+chmod 660 /etc/sasldb2
+
+# Enable submission (port 587) with TLS and authentication
+postconf -M submission/inet="submission   inet   n   -   n   -   -   smtpd"
+postconf -P "submission/inet/syslog_name=postfix/submission"
+postconf -P "submission/inet/smtpd_tls_security_level=encrypt"
+postconf -P "submission/inet/smtpd_sasl_auth_enable=yes"
+postconf -P "submission/inet/smtpd_recipient_restrictions=permit_sasl_authenticated,reject_unauth_destination"
+
+# Enable smtps (port 465) with TLS and authentication
+postconf -M smtps/inet="smtps   inet   n   -   y   -   -   smtpd"
+postconf -P "smtps/inet/syslog_name=postfix/smtps"
+postconf -P "smtps/inet/smtpd_tls_wrappermode=yes"
+postconf -P "smtps/inet/smtpd_sasl_auth_enable=yes"
+postconf -P "smtps/inet/smtpd_recipient_restrictions=permit_sasl_authenticated,reject_unauth_destination"
+
 postconf -e "maillog_file = /dev/stdout"
 
-# Relay (se aplicável)
+# Configure relay host
 if [ "$QUICKPOSTFIX_MODE" = "relay" ]; then
     postconf -e "relayhost = [$RELAY_HOST]:$RELAY_PORT"
     echo "[$RELAY_HOST]:$RELAY_PORT $RELAY_USER:$RELAY_PASSWORD" > /etc/postfix/sasl_passwd
@@ -42,5 +57,5 @@ if [ "$QUICKPOSTFIX_MODE" = "relay" ]; then
 else
     postconf -e "relayhost ="
 fi
-# Iniciar postfix em foreground
+
 exec postfix start-fg

@@ -1,4 +1,4 @@
-# Dockerfile for quick-postfix
+# Dockerfile for quick-postfix using sasldb (auxprop) with submission and smtps enabled
 FROM debian:12-slim
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -13,52 +13,35 @@ RUN apt-get update && apt-get install -y \
     swaks \
     vim-nox \
     procps \
+    syslog-ng \
     && rm -rf /var/lib/apt/lists/*
 
+# SASL configuration
+RUN mkdir -p /etc/postfix/sasl && \
+    cat > /etc/postfix/sasl/smtpd.conf <<'EOF'
+pwcheck_method: auxprop
+auxprop_plugin: sasldb
+mech_list: PLAIN LOGIN CRAM-MD5 DIGEST-MD5 NTLM
+EOF
 
 # Postfix configuration
-RUN postconf -e "smtpd_sasl_local_domain = \$mydomain"
-RUN postconf -e "mydomain = ${MYDOMAIN:-example.com}" && \
-    postconf -e "myhostname = ${POSTFIX_HOSTNAME:-mail.example.com}"
+RUN postconf -e "myhostname = ${POSTFIX_HOSTNAME:-mail.example.com}" && \
+    postconf -e "mydomain = ${MYDOMAIN:-example.com}" && \
+    postconf -e "smtpd_sasl_auth_enable = yes" && \
+    postconf -e "broken_sasl_auth_clients = yes" && \
+    postconf -e "smtpd_recipient_restrictions = permit_sasl_authenticated,reject_unauth_destination" && \
+    postconf -e "smtpd_tls_cert_file = /etc/postfix/certs/fullchain.pem" && \
+    postconf -e "smtpd_tls_key_file = /etc/postfix/certs/privkey.pem" && \
+    postconf -e "smtpd_use_tls = yes" && \
+    postconf -e "smtpd_tls_auth_only = yes" && \
+    postconf -e "relayhost ="
 
-
-RUN postconf -e 'smtpd_tls_cert_file=/etc/postfix/certs/fullchain.pem' && \
-    postconf -e 'smtpd_tls_key_file=/etc/postfix/certs/privkey.pem' && \
-    postconf -e 'smtpd_use_tls=yes' && \
-    postconf -e 'smtpd_tls_auth_only=yes' && \
-    postconf -e 'smtpd_sasl_auth_enable=yes' && \
-    postconf -e 'smtpd_sasl_security_options=noanonymous' && \
-    postconf -e 'smtpd_sasl_local_domain=' && \
-    postconf -e 'broken_sasl_auth_clients=yes' && \
-    postconf -e 'disable_vrfy_command=yes' && \
-    postconf -e 'relayhost='
-
-RUN postconf -M submission/inet="submission inet n - y - - smtpd" && \
-    postconf -P "submission/inet/syslog_name=postfix/submission" && \
-    postconf -P "submission/inet/smtpd_tls_security_level=encrypt" && \
-    postconf -P "submission/inet/smtpd_sasl_auth_enable=yes" && \
-    postconf -P "submission/inet/smtpd_client_restrictions=permit_sasl_authenticated,reject" && \
-    postconf -M smtps/inet="smtps inet n - y - - smtpd" && \
-    postconf -P "smtps/inet/syslog_name=postfix/smtps" && \
-    postconf -P "smtps/inet/smtpd_tls_wrappermode=yes" && \
-    postconf -P "smtps/inet/smtpd_sasl_auth_enable=yes" && \
-    postconf -P "smtps/inet/smtpd_client_restrictions=permit_sasl_authenticated,reject" && \
-    postconf -e "master_service_disable = smtp"
-
-
-RUN echo "pwcheck_method: auxprop" > /etc/postfix/sasl/smtpd.conf && \
-    echo "mech_list: PLAIN LOGIN" >> /etc/postfix/sasl/smtpd.conf
-
-# Enable SASL authentication daemon
-RUN sed -i 's/^START=.*/START=yes/' /etc/default/saslauthd
-
-# Configure vim
-RUN echo "set mouse-=a" >> /etc/vim/vimrc
+EXPOSE 465 587
 
 COPY entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
-VOLUME ["/etc/postfix/certs", "/var/spool/postfix"]
+#VOLUME ["/etc/postfix/certs", "/var/spool/postfix"]
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["postfix", "start-fg"]
