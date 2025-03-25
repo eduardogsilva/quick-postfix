@@ -1,8 +1,6 @@
 #!/bin/bash
 set -e
 
-source /.env
-
 # Create SSL certificate if it doesn't exist
 CERT_DIR="/etc/postfix/certs"
 mkdir -p "$CERT_DIR"
@@ -56,6 +54,11 @@ if [ "$QUICKPOSTFIX_MODE" = "relay" ]; then
     postconf -e "smtp_tls_security_level = encrypt"
 else
     postconf -e "relayhost ="
+fi
+
+if [ -d /var/spool/postfix ]; then
+    mkdir -p /var/spool/postfix/etc
+    cp /etc/resolv.conf /var/spool/postfix/etc/resolv.conf
 fi
 
 exec postfix start-fg

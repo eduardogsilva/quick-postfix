@@ -28,7 +28,7 @@ EOF
 RUN postconf -e "myhostname = ${POSTFIX_HOSTNAME:-mail.example.com}" && \
     postconf -e "mydomain = ${MYDOMAIN:-example.com}" && \
     postconf -e "smtpd_sasl_auth_enable = yes" && \
-    postconf -e "broken_sasl_auth_clients = yes" && \
+    postconf -e "broken_sasl_auth_clients = no" && \
     postconf -e "smtpd_recipient_restrictions = permit_sasl_authenticated,reject_unauth_destination" && \
     postconf -e "smtpd_tls_cert_file = /etc/postfix/certs/fullchain.pem" && \
     postconf -e "smtpd_tls_key_file = /etc/postfix/certs/privkey.pem" && \
@@ -40,8 +40,6 @@ EXPOSE 465 587
 
 COPY entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/entrypoint.sh
-
-#VOLUME ["/etc/postfix/certs", "/var/spool/postfix"]
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["postfix", "start-fg"]
