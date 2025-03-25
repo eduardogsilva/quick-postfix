@@ -28,6 +28,7 @@ chmod 640 /etc/sasldb2
 postconf -e "myhostname = ${POSTFIX_HOSTNAME}"
 postconf -e "mydomain = ${MYDOMAIN}"
 postconf -e "smtpd_sasl_local_domain = ${MYDOMAIN}"
+postconf -e "maillog_file = /dev/stdout"
 
 # Relay (se aplicável)
 if [ "$QUICKPOSTFIX_MODE" = "relay" ]; then
@@ -41,6 +42,5 @@ if [ "$QUICKPOSTFIX_MODE" = "relay" ]; then
 else
     postconf -e "relayhost ="
 fi
-
 # Iniciar postfix em foreground
 exec postfix start-fg

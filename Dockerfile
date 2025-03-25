@@ -13,7 +13,6 @@ RUN apt-get update && apt-get install -y \
     swaks \
     vim-nox \
     procps \
-    syslog-ng \
     && rm -rf /var/lib/apt/lists/*
 
 

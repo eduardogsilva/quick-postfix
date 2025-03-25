@@ -14,9 +14,7 @@ services:
       # - "${TLS_PORT_ALT}:587"
     volumes:
       - postfix-certs:/etc/postfix/certs
-      - postfix-spool:/var/spool/postfix
       - ./.env:/.env:ro
 
 volumes:
   postfix-certs:
-  postfix-spool:
