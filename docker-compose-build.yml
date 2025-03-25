@@ -1,0 +1,7 @@
+version: '3'
+services:
+  quick-postfix:
+    image: eduardosilva/quick-postfix:latest
+    build:
+      context: .
+

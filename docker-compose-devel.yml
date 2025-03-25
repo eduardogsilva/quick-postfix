@@ -2,7 +2,8 @@ version: '3.8'
 
 services:
   quick-postfix:
-    image: eduardosilva/quick-postfix:latest
+    build: .
+    container_name: quick-postfix
     env_file: .env
     ports:
       # Map external ports to internal ports (465 and 587)
