@@ -1,8 +1,8 @@
 version: '3.8'
 
 services:
-  quick-postfix:
-    image: eduardosilva/quick-postfix:latest
+  quick-postfix-relay:
+    image: eduardosilva/quick-postfix-relay:latest
     env_file: .env
     ports:
       # Map external ports to internal ports (465 and 587)

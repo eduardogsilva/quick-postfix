@@ -1,6 +1,6 @@
-# quick-postfix
+# quick-postfix-relay
 
-quick-postfix is a simple service designed to allow IoT devices, scripts, or other equipment to authenticate and send emails in general. It also supports defining a smarthost for relaying emails, such as Gmail or other email services.
+quick-postfix-relay is a simple service designed to allow IoT devices, scripts, or other equipment to authenticate and send emails in general. It also supports defining a smarthost for relaying emails, such as Gmail or other email services.
 
 ## Features
 
@@ -29,7 +29,7 @@ docker run \
   -p 465:465 \
   -p 587:587 \
   -v postfix-certs:/etc/postfix/certs \
-  eduardosilva/quick-postfix:latest
+  eduardosilva/quick-postfix-relay:latest
 ```
 
 ### 2. Using Docker Compose and .env file
@@ -61,7 +61,7 @@ The service can be configured with the following environment variables:
 
 ## Additional Note for Standalone Mode
 
-If you run quick-postfix in standalone mode, keep in mind that additional configurations are required for proper email delivery. These include, but are not limited to:
+If you run quick-postfix-relay in standalone mode, keep in mind that additional configurations are required for proper email delivery. These include, but are not limited to:
 
 - DNS Configuration
 - Reverse DNS Setup

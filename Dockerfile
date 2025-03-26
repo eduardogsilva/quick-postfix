@@ -1,4 +1,3 @@
-# Dockerfile for quick-postfix using sasldb (auxprop) with submission and smtps enabled
 FROM debian:12-slim
 
 ENV DEBIAN_FRONTEND=noninteractive

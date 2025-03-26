@@ -1,7 +1,7 @@
 #!/bin/bash
 
 IMAGES=(
-  "eduardosilva/quick-postfix:latest"
+  "eduardosilva/quick-postfix-relay:latest"
 )
 
 build_images() {
