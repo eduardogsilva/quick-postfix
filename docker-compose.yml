@@ -2,6 +2,8 @@ version: '3.8'
 
 services:
   quick-postfix-relay:
+    container_name: quick-postfix-relay
+    restart: unless-stopped
     image: eduardosilva/quick-postfix-relay:latest
     env_file: .env
     ports:

@@ -4,6 +4,7 @@ services:
   quick-postfix-relay:
     build: .
     container_name: quick-postfix-relay
+    restart: unless-stopped
     env_file: .env
     ports:
       # Map external ports to internal ports (465 and 587)
